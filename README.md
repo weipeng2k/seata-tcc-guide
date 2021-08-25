@@ -1,2 +1,2 @@
-# seata-guide
-分布式事务框架Seata的示例
+# seata-tcc-guide
+分布式事务框架Seata的TCC模式示例
