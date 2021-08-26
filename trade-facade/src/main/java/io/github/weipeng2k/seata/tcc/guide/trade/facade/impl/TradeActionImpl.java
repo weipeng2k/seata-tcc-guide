@@ -3,6 +3,9 @@ package io.github.weipeng2k.seata.tcc.guide.trade.facade.impl;
 import io.github.weipeng2k.seata.tcc.guide.order.api.OrderCreateService;
 import io.github.weipeng2k.seata.tcc.guide.order.api.exception.OrderException;
 import io.github.weipeng2k.seata.tcc.guide.order.api.param.CreateOrderParam;
+import io.github.weipeng2k.seata.tcc.guide.product.api.ProductInventoryService;
+import io.github.weipeng2k.seata.tcc.guide.product.api.exception.ProductException;
+import io.github.weipeng2k.seata.tcc.guide.product.api.param.OccupyProductInventoryParam;
 import io.github.weipeng2k.seata.tcc.guide.trade.facade.TradeAction;
 import org.apache.dubbo.config.annotation.DubboReference;
 import org.springframework.stereotype.Component;
@@ -15,6 +18,8 @@ public class TradeActionImpl implements TradeAction {
 
     @DubboReference(group = "dubbo", version = "1.0.0")
     private OrderCreateService orderCreateService;
+    @DubboReference(group = "dubbo", version = "1.0.0")
+    private ProductInventoryService productInventoryService;
 
     @Override
     public void makeOrder(Long productId, Long buyerId, Integer amount) {
@@ -23,10 +28,21 @@ public class TradeActionImpl implements TradeAction {
         createOrderParam.setBuyerUserId(buyerId);
         createOrderParam.setAmount(amount);
 
+        Long orderId;
         try {
-            Long orderId = orderCreateService.createOrder(createOrderParam);
+            orderId = orderCreateService.createOrder(createOrderParam);
         } catch (OrderException ex) {
+            throw new RuntimeException(ex);
+        }
 
+        OccupyProductInventoryParam occupyProductParam = new OccupyProductInventoryParam();
+        try {
+            occupyProductParam.setProductId(productId);
+            occupyProductParam.setAmount(amount);
+            occupyProductParam.setOutBizId(orderId);
+            productInventoryService.occupyProductInventory(occupyProductParam);
+        } catch (ProductException ex) {
+            throw new RuntimeException(ex);
         }
     }
 }

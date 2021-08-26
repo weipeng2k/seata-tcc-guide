@@ -18,6 +18,27 @@ public interface OrderCreateService {
      *
      * @param param 订单创建参数
      * @return 返回订单主键，如果创建失败则会抛出异常
+     * @throws OrderException 订单异常
      */
     Long createOrder(CreateOrderParam param) throws OrderException;
+
+    /**
+     * <pre>
+     * 根据订单ID确认订单
+     * </pre>
+     *
+     * @param orderId 订单ID
+     * @throws OrderException 订单异常
+     */
+    void confirmOrder(Long orderId) throws OrderException;
+
+    /**
+     * <pre>
+     * 根据订单ID作废当前订单
+     * </pre>
+     *
+     * @param orderId 订单ID
+     * @throws OrderException 订单异常
+     */
+    void cancelOrder(Long orderId) throws OrderException;
 }

@@ -23,6 +23,10 @@
             <artifactId>seata-tcc-guide-order-api</artifactId>
         </dependency>
         <dependency>
+            <groupId>io.seata</groupId>
+            <artifactId>seata-all</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.apache.dubbo</groupId>
             <artifactId>dubbo-spring-boot-starter</artifactId>
         </dependency>

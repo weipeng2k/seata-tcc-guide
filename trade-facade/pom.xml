@@ -23,6 +23,10 @@
             <artifactId>seata-tcc-guide-order-api</artifactId>
         </dependency>
         <dependency>
+            <groupId>io.seata</groupId>
+            <artifactId>seata-all</artifactId>
+        </dependency>
+        <dependency>
             <groupId>io.github.weipeng2k</groupId>
             <artifactId>seata-tcc-guide-product-api</artifactId>
         </dependency>
