@@ -7,6 +7,7 @@ import io.github.weipeng2k.seata.tcc.guide.product.api.ProductInventoryService;
 import io.github.weipeng2k.seata.tcc.guide.product.api.exception.ProductException;
 import io.github.weipeng2k.seata.tcc.guide.product.api.param.OccupyProductInventoryParam;
 import io.github.weipeng2k.seata.tcc.guide.trade.facade.TradeAction;
+import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.dubbo.config.annotation.DubboReference;
 import org.springframework.stereotype.Component;
 
@@ -22,6 +23,7 @@ public class TradeActionImpl implements TradeAction {
     private ProductInventoryService productInventoryService;
 
     @Override
+    @GlobalTransactional
     public void makeOrder(Long productId, Long buyerId, Integer amount) {
         CreateOrderParam createOrderParam = new CreateOrderParam();
         createOrderParam.setProductId(productId);
@@ -43,6 +45,15 @@ public class TradeActionImpl implements TradeAction {
             productInventoryService.occupyProductInventory(occupyProductParam);
         } catch (ProductException ex) {
             throw new RuntimeException(ex);
+        }
+    }
+
+    @Override
+    public void setProductInventory(Long productId, Integer amount) {
+        try {
+            productInventoryService.setProductInventory(productId, amount);
+        } catch (ProductException e) {
+            e.printStackTrace();
         }
     }
 }

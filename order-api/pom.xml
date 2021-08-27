@@ -19,6 +19,10 @@
             <artifactId>lombok</artifactId>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>io.seata</groupId>
+            <artifactId>seata-tcc</artifactId>
+        </dependency>
         <!-- TEST -->
         <dependency>
             <groupId>junit</groupId>

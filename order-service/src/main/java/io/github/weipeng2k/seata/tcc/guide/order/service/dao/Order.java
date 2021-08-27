@@ -1,4 +1,4 @@
-package io.github.weipeng2k.seata.tcc.guide.order.service.impl;
+package io.github.weipeng2k.seata.tcc.guide.order.service.dao;
 
 import lombok.Getter;
 import lombok.Setter;

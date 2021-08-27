@@ -15,6 +15,10 @@
 
     <dependencies>
         <dependency>
+            <groupId>io.seata</groupId>
+            <artifactId>seata-tcc</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <scope>compile</scope>

@@ -10,4 +10,10 @@ public interface TradeAction {
      * @param amount
      */
     void makeOrder(Long productId, Long buyerId, Integer amount);
+
+    /**
+     * @param productId
+     * @param amount
+     */
+    void setProductInventory(Long productId, Integer amount);
 }

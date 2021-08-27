@@ -3,6 +3,8 @@ package io.github.weipeng2k.seata.tcc.guide.order.api;
 
 import io.github.weipeng2k.seata.tcc.guide.order.api.exception.OrderException;
 import io.github.weipeng2k.seata.tcc.guide.order.api.param.CreateOrderParam;
+import io.seata.rm.tcc.api.BusinessActionContext;
+import io.seata.rm.tcc.api.TwoPhaseBusinessAction;
 
 /**
  * <pre>
@@ -16,10 +18,11 @@ public interface OrderCreateService {
     /**
      * 根据参数创建一笔订单
      *
-     * @param param 订单创建参数
+     * @param param                 订单创建参数
      * @return 返回订单主键，如果创建失败则会抛出异常
      * @throws OrderException 订单异常
      */
+    @TwoPhaseBusinessAction(name = "orderCreateService", commitMethod = "confirmOrder", rollbackMethod = "cancelOrder")
     Long createOrder(CreateOrderParam param) throws OrderException;
 
     /**
@@ -27,18 +30,18 @@ public interface OrderCreateService {
      * 根据订单ID确认订单
      * </pre>
      *
-     * @param orderId 订单ID
+     * @param businessActionContext 业务行为上下文
      * @throws OrderException 订单异常
      */
-    void confirmOrder(Long orderId) throws OrderException;
+    void confirmOrder(BusinessActionContext businessActionContext) throws OrderException;
 
     /**
      * <pre>
      * 根据订单ID作废当前订单
      * </pre>
      *
-     * @param orderId 订单ID
+     * @param businessActionContext 业务行为上下文
      * @throws OrderException 订单异常
      */
-    void cancelOrder(Long orderId) throws OrderException;
+    void cancelOrder(BusinessActionContext businessActionContext) throws OrderException;
 }

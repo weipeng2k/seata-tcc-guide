@@ -1,4 +1,4 @@
-package io.github.weipeng2k.seata.tcc.guide.product.service.impl;
+package io.github.weipeng2k.seata.tcc.guide.product.service.dao;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -6,7 +6,7 @@ import lombok.ToString;
 
 /**
  * <pre>
- * 占用明细
+ * 库存占用明细
  * </pre>
  *
  * @author weipeng2k 2021年08月26日 下午21:25:58
@@ -14,7 +14,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class OccupyProductInventoryEntry {
+public class ProductInventoryEntry {
 
     public static final Integer INIT = 1;
     public static final Integer SUCCESS = 2;
@@ -27,6 +27,10 @@ public class OccupyProductInventoryEntry {
      * 产品ID
      */
     private Long productId;
+    /**
+     * 外部交易ID，比如：订单
+     */
+    private Long outBizId;
     /**
      * 数量
      */
