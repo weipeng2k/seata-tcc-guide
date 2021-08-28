@@ -16,7 +16,7 @@
     <dependencies>
         <dependency>
             <groupId>io.seata</groupId>
-            <artifactId>seata-tcc</artifactId>
+            <artifactId>seata-all</artifactId>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>

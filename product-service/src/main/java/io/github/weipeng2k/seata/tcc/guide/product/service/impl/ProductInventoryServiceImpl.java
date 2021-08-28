@@ -13,7 +13,9 @@ import org.apache.dubbo.config.annotation.DubboService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Objects;
 
 /**
  * @author weipeng2k 2021年08月26日 下午21:09:30
@@ -27,14 +29,16 @@ public class ProductInventoryServiceImpl implements ProductInventoryService {
     private ProductInventoryEntryDAO productInventoryEntryDAO;
 
     @Override
-    public Long occupyProductInventory(OccupyProductInventoryParam param) throws ProductException {
+    public Long occupyProductInventory(OccupyProductInventoryParam param, String outBizId) throws ProductException {
         if (param == null || param.getProductId() == null || param.getOutBizId() == null || param.getAmount() == null) {
             throw new ProductException(ProductErrorCode.ILLEGAL_ARGUMENT);
         }
 
         String content = String.format("外部订单{%d}预占商品{%d}库存数量为{%d}", param.getOutBizId(), param.getProductId(),
                 param.getAmount());
-        String runtime = "@" + new Date() + "[" + Thread.currentThread().getName() + "] in Tx(" + RootContext.getXID() + ")";
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String runtime = "@" + simpleDateFormat.format(
+                new Date()) + "[" + Thread.currentThread().getName() + "] in Tx(" + RootContext.getXID() + ")";
 
         Integer preProductInventory = productInventoryDAO.getPreProductInventory(param.getProductId());
 
@@ -48,29 +52,32 @@ public class ProductInventoryServiceImpl implements ProductInventoryService {
             pie.setStatus(ProductInventoryEntry.INIT);
             Long id = productInventoryEntryDAO.insertProductInventoryEntry(pie);
             String end = String.format("，预占库存成功，占用明细{%d}生成", id);
-            System.out.println(content + end + runtime);
-//            businessActionContext.getActionContext().put("OUT_BIZ_ID", param.getOutBizId());
+            // for eye-catching
+            System.err.println(content + end + runtime);
             return id;
         } else {
             String end = "，预占库存失败";
-            System.out.println(content + end + runtime);
+            // for eye-catching
+            System.err.println(content + end + runtime);
             throw new ProductException(ProductErrorCode.INVENTORY_NOT_ENOUGH);
         }
     }
 
     @Override
     public void confirmProductInventory(BusinessActionContext businessActionContext) throws ProductException {
-        Long outBizId = (Long) businessActionContext.getActionContext().get("OUT_BIZ_ID");
-
-        if (outBizId != null) {
+        Object outBizIdStr = businessActionContext.getActionContext().get("outBizId");
+        if (outBizIdStr != null) {
+            Long outBizId = Long.parseLong(outBizIdStr.toString());
             ProductInventoryEntry pie = productInventoryEntryDAO.getProductInventoryEntry(outBizId);
 
             // 占用明细生效，真实库存扣减
-            if (pie != null) {
+            if (pie != null && !Objects.equals(pie.getStatus(), ProductInventoryEntry.SUCCESS)) {
+                SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                 String content = String.format("外部订单{%d}预占商品{%d}库存数量为{%d}，占用明细{%d}成功", outBizId, pie.getProductId(),
                         pie.getAmount(), pie.getId());
-                String runtime = "@" + new Date() + "[" + Thread.currentThread().getName() + "] in Tx(" + RootContext.getXID() + ")";
-                System.out.println(content + runtime);
+                String runtime = "@" + simpleDateFormat.format(new Date()) + "[" + Thread.currentThread().getName() + "] in Tx(" + businessActionContext.getXid() + ")";
+                // for eye-catching
+                System.err.println(content + runtime);
 
                 productInventoryDAO.reduceRealProductInventory(pie.getProductId(), pie.getAmount());
                 productInventoryEntryDAO.updateProductInventoryEntry(outBizId, ProductInventoryEntry.SUCCESS);
@@ -80,17 +87,19 @@ public class ProductInventoryServiceImpl implements ProductInventoryService {
 
     @Override
     public void cancelProductInventory(BusinessActionContext businessActionContext) throws ProductException {
-        Long outBizId = (Long) businessActionContext.getActionContext().get("OUT_BIZ_ID");
-
-        if (outBizId != null) {
+        Object outBizIdStr = businessActionContext.getActionContext().get("outBizId");
+        if (outBizIdStr != null) {
+            Long outBizId = Long.parseLong(outBizIdStr.toString());
             ProductInventoryEntry pie = productInventoryEntryDAO.getProductInventoryEntry(outBizId);
 
             // 占用明细取消，预扣库存增加
-            if (pie != null) {
+            if (pie != null && !Objects.equals(pie.getStatus(), ProductInventoryEntry.CANCEL)) {
+                SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                 String begin = String.format("外部订单{%d}预占商品{%d}库存数量为{%d}，占用明细{%d}取消", outBizId, pie.getProductId(),
                         pie.getAmount(), pie.getId());
-                String runtime = "@" + new Date() + "[" + Thread.currentThread().getName() + "] in Tx(" + RootContext.getXID() + ")";
-                System.out.println(begin + runtime);
+                String runtime = "@" + simpleDateFormat.format(new Date()) + "[" + Thread.currentThread().getName() + "] in Tx(" + businessActionContext.getXid() + ")";
+                // for eye-catching
+                System.err.println(begin + runtime);
 
                 productInventoryDAO.addPreProductInventory(pie.getProductId(), pie.getAmount());
                 productInventoryEntryDAO.updateProductInventoryEntry(outBizId, ProductInventoryEntry.CANCEL);
@@ -102,5 +111,10 @@ public class ProductInventoryServiceImpl implements ProductInventoryService {
     public void setProductInventory(Long productId, Integer amount) throws ProductException {
         productInventoryDAO.setPreProductInventory(productId, amount);
         productInventoryDAO.setRealProductInventory(productId, amount);
+    }
+
+    @Override
+    public Integer getProductInventory(Long productId) {
+        return productInventoryDAO.getPreProductInventory(productId);
     }
 }

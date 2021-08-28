@@ -5,15 +5,28 @@ package io.github.weipeng2k.seata.tcc.guide.trade.facade;
  */
 public interface TradeAction {
     /**
-     * @param productId
-     * @param buyerId
-     * @param amount
+     * 商品下单接口
+     *
+     * @param productId 商品
+     * @param buyerId   买家
+     * @param amount    数量
+     * @return 订单ID
      */
-    void makeOrder(Long productId, Long buyerId, Integer amount);
+    Long makeOrder(Long productId, Long buyerId, Integer amount);
 
     /**
-     * @param productId
-     * @param amount
+     * 设置库存
+     *
+     * @param productId 商品
+     * @param amount    数量
      */
     void setProductInventory(Long productId, Integer amount);
+
+    /**
+     * 获取库存
+     *
+     * @param productId 商品ID
+     * @return 库存
+     */
+    Integer getProductInventory(Long productId);
 }

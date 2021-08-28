@@ -23,18 +23,14 @@ public class OrderDAOImpl implements OrderDAO {
      * 订单存储
      */
     private final ConcurrentMap<Long, Order> orders = new ConcurrentHashMap<>();
-    // fake id generator
-    private final AtomicLong idGenerator = new AtomicLong(1L);
+
 
     @Override
     public Long insertOrder(Order order) {
-        Long id = idGenerator.getAndIncrement();
-
         sleepRandomIn(300);
 
-        order.setId(id);
-        orders.put(id, order);
-        return id;
+        orders.put(order.getId(), order);
+        return order.getId();
     }
 
     @Override

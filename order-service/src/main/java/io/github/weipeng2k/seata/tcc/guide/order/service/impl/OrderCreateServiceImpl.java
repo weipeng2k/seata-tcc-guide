@@ -8,11 +8,11 @@ import io.github.weipeng2k.seata.tcc.guide.order.service.dao.Order;
 import io.github.weipeng2k.seata.tcc.guide.order.service.dao.OrderDAO;
 import io.seata.core.context.RootContext;
 import io.seata.rm.tcc.api.BusinessActionContext;
-import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.dubbo.config.annotation.DubboService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
@@ -26,7 +26,8 @@ public class OrderCreateServiceImpl implements OrderCreateService {
     private OrderDAO orderDAO;
 
     @Override
-    public Long createOrder(CreateOrderParam param) throws OrderException {
+    @SuppressWarnings("ALL")
+    public void createOrder(CreateOrderParam param, Long orderId) throws OrderException {
         if (param == null || param.getProductId() == null || param.getBuyerUserId() == null || param.getAmount() == null) {
             throw new OrderException(OrderErrorCode.ILLEGAL_ARGUMENT);
         }
@@ -35,45 +36,51 @@ public class OrderCreateServiceImpl implements OrderCreateService {
         order.setBuyerUserId(param.getBuyerUserId());
         order.setProductId(param.getProductId());
         order.setAmount(param.getAmount());
-
+        order.setId(orderId);
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Long id = orderDAO.insertOrder(order);
         String content = String.format("买家{%d}购买商品{%d}，数量为{%d}，订单{%d}生成", order.getBuyerUserId(), order.getProductId(),
                 order.getAmount(), id);
-        String runtime = "@" + new Date() + "[" + Thread.currentThread().getName() + "] in Tx(" + RootContext.getXID() + ")";
-        System.out.println(content + runtime);
-//        businessActionContext.getActionContext().put("ORDER_ID", id);
-        RootContext.entries().put("ORDER_ID", id);
-        return id;
+        String runtime = "@" + simpleDateFormat.format(
+                new Date()) + "[" + Thread.currentThread().getName() + "] in Tx(" + RootContext.getXID() + ")";
+        // for eye-catching
+        System.err.println(content + runtime);
     }
 
     @Override
     public void confirmOrder(BusinessActionContext businessActionContext) throws OrderException {
-        System.err.println("dddd");
-        Long orderId = (Long) RootContext.entries().get("ORDER_ID");
-        if (orderId != null) {
+        Object orderIdStr = businessActionContext.getActionContext().get("orderId");
+        if (orderIdStr != null) {
+            Long orderId = Long.parseLong(orderIdStr.toString());
             Order order = orderDAO.getOrder(orderId);
-            if (order != null) {
+            if (order != null && !order.isEnable()) {
                 orderDAO.confirmOrder(orderId);
+                SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                 String content = String.format("买家{%d}购买商品{%d}，数量为{%d}，订单{%d}启用", order.getBuyerUserId(),
                         order.getProductId(), order.getAmount(), orderId);
-                String runtime = "@" + new Date() + "[" + Thread.currentThread().getName() + "] in Tx(" + RootContext.getXID() + ")";
-                System.out.println(content + runtime);
+                String runtime = "@" + simpleDateFormat.format(
+                        new Date()) + "[" + Thread.currentThread().getName() + "] in Tx(" + businessActionContext.getXid() + ")";
+                // for eye-catching
+                System.err.println(content + runtime);
             }
         }
     }
 
     @Override
     public void cancelOrder(BusinessActionContext businessActionContext) throws OrderException {
-        System.err.println("xxxx");
-        Long orderId = (Long) RootContext.entries().get("ORDER_ID");
-        if (orderId != null) {
+        Object orderIdStr = businessActionContext.getActionContext().get("orderId");
+        if (orderIdStr != null) {
+            Long orderId = Long.parseLong(orderIdStr.toString());
             Order order = orderDAO.getOrder(orderId);
             if (order != null) {
                 orderDAO.cancelOrder(orderId);
+                SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                 String content = String.format("买家{%d}购买商品{%d}，数量为{%d}，订单{%d}取消", order.getBuyerUserId(),
                         order.getProductId(), order.getAmount(), orderId);
-                String runtime = "@" + new Date() + "[" + Thread.currentThread().getName() + "] in Tx(" + RootContext.getXID() + ")";
-                System.out.println(content + runtime);
+                String runtime = "@" + simpleDateFormat.format(
+                        new Date()) + "[" + Thread.currentThread().getName() + "] in Tx(" + businessActionContext.getXid() + ")";
+                // for eye-catching
+                System.err.println(content + runtime);
             }
         }
     }

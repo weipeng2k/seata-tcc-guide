@@ -28,6 +28,7 @@ public class OrderDAOTest extends AbstractJUnit4SpringContextTests {
         order.setAmount(1);
         order.setBuyerUserId(1L);
         order.setProductId(1L);
+        order.setId(1L);
         Long id = orderDAO.insertOrder(order);
         assertTrue(id.intValue() > 0);
         assertNotNull(order.getId());

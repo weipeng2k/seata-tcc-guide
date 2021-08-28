@@ -7,9 +7,13 @@ import io.github.weipeng2k.seata.tcc.guide.product.api.ProductInventoryService;
 import io.github.weipeng2k.seata.tcc.guide.product.api.exception.ProductException;
 import io.github.weipeng2k.seata.tcc.guide.product.api.param.OccupyProductInventoryParam;
 import io.github.weipeng2k.seata.tcc.guide.trade.facade.TradeAction;
+import io.seata.core.context.RootContext;
+import io.seata.core.model.BranchType;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.dubbo.config.annotation.DubboReference;
 import org.springframework.stereotype.Component;
+
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author weipeng2k 2021年08月25日 下午21:38:58
@@ -22,17 +26,21 @@ public class TradeActionImpl implements TradeAction {
     @DubboReference(group = "dubbo", version = "1.0.0")
     private ProductInventoryService productInventoryService;
 
+    // fake id generator
+    private final AtomicLong orderIdGenerator = new AtomicLong(System.currentTimeMillis());
+
     @Override
     @GlobalTransactional
-    public void makeOrder(Long productId, Long buyerId, Integer amount) {
+    public Long makeOrder(Long productId, Long buyerId, Integer amount) {
+        RootContext.bindBranchType(BranchType.TCC);
         CreateOrderParam createOrderParam = new CreateOrderParam();
         createOrderParam.setProductId(productId);
         createOrderParam.setBuyerUserId(buyerId);
         createOrderParam.setAmount(amount);
-
         Long orderId;
         try {
-            orderId = orderCreateService.createOrder(createOrderParam);
+            orderId = orderIdGenerator.getAndIncrement();
+            orderCreateService.createOrder(createOrderParam, orderId);
         } catch (OrderException ex) {
             throw new RuntimeException(ex);
         }
@@ -42,10 +50,12 @@ public class TradeActionImpl implements TradeAction {
             occupyProductParam.setProductId(productId);
             occupyProductParam.setAmount(amount);
             occupyProductParam.setOutBizId(orderId);
-            productInventoryService.occupyProductInventory(occupyProductParam);
+            productInventoryService.occupyProductInventory(occupyProductParam, orderId.toString());
         } catch (ProductException ex) {
             throw new RuntimeException(ex);
         }
+
+        return orderId;
     }
 
     @Override
@@ -55,5 +65,10 @@ public class TradeActionImpl implements TradeAction {
         } catch (ProductException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public Integer getProductInventory(Long productId) {
+        return productInventoryService.getProductInventory(productId);
     }
 }
